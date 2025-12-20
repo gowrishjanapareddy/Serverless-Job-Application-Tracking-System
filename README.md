@@ -1,92 +1,203 @@
-# SERVERLESS ATS – SETUP, DEPLOYMENT, LINKS & TESTING (ONE BLOCK ONLY)
+# Serverless Job Application Tracking System (ATS)
 
-## PROJECT LINKS
-VIDEO DEMO:
+A cloud-native, event-driven **Serverless ATS** designed to manage high-volume recruitment workflows.  
+Built with AWS Lambda, API Gateway, Cognito, Step Functions, SQS, SES, and PostgreSQL (RDS).
+
+---
+
+## Demo & Documentation
+
+Video Demo:  
 https://drive.google.com/file/d/1DcG9rU77V9OZRAu6cYVR1HOokzPO5j7z/view
 
-POSTMAN API DOCUMENTATION:
+API Documentation (Postman):  
 https://documenter.getpostman.com/view/48093520/2sB3dQw9rQ
 
-POSTGRESQL:
+PostgreSQL Reference:  
 https://www.postgresql.org/docs/
 
-AWS SERVICES USED:
-https://aws.amazon.com/lambda/
-https://aws.amazon.com/api-gateway/
-https://aws.amazon.com/cognito/
-https://aws.amazon.com/step-functions/
-https://aws.amazon.com/rds/
+---
 
-## DATABASE INITIALIZATION
-/database/schema.sql
-- Run this SQL file on PostgreSQL
-- Creates all required tables and constraints
+## Architecture Overview
 
-## AMAZON RDS (POSTGRESQL)
-- Create PostgreSQL RDS instance
-- Open inbound port 5432 for Lambda security group
-- Connect using DB client
-- Execute schema.sql
+This project follows a fully decoupled microservices architecture backed by event-driven messaging.
 
-## AWS LAMBDA (FOR EACH MICROSERVICE)
-cd ATS-Job-Service
-npm install
-- Zip ONLY folder contents
-- Create Lambda (Runtime: Node.js 20.x)
-- Upload zip
-- Configure environment variables
+- Amazon API Gateway – REST entry point  
+- Amazon Cognito – Authentication & JWT  
+- AWS Lambda – Stateless compute  
+- Amazon RDS (PostgreSQL) – Primary database  
+- AWS Step Functions – Application lifecycle workflow  
+- Amazon SQS + SES – Async processing & emails  
 
-## REQUIRED ENV VARIABLES
-DB_HOST=your-rds-endpoint
-DB_USER=postgres
-DB_PASSWORD=your_password
-DB_NAME=postgres
-QUEUE_URL=your_sqs_queue_url
-STATE_MACHINE_ARN=your_step_function_arn
-SENDER_EMAIL=verified_ses_email
+---
 
-## AWS STEP FUNCTIONS
-- Create Standard State Machine
-- Chain Lambdas:
-  - ATS-State-Updater
-  - ATS-Email-Worker
-- Grant permissions to invoke Lambdas
-- Copy State Machine ARN
-- Paste ARN into ATS-Workflow-Trigger Lambda
+## Microservices
 
-## API GATEWAY
-- Create REST API
-- Map routes to Lambdas
-- Enable CORS on all routes
-- Deploy to stage (prod)
+ATS-Job-Service  
+ATS-Application-Service  
+ATS-User-Sync  
+ATS-Workflow-Trigger  
+ATS-State-Updater  
+ATS-Email-Worker  
 
-## AMAZON COGNITO
-- Create User Pool (email sign-in)
-- Create App Client (NO client secret)
-- Enable USER_PASSWORD_AUTH
-- Attach ATS-User-Sync Lambda to Post Confirmation trigger
+---
 
-## JWT TOKEN GENERATION
-aws cognito-idp initiate-auth \
---auth-flow USER_PASSWORD_AUTH \
---client-id YOUR_CLIENT_ID \
---auth-parameters USERNAME=user@example.com,PASSWORD=Password@123
+## Workflow & State Management
 
-- Copy IdToken
-- Paste into Postman Authorization header
+Valid States:  
+Applied → Screening → Interview → Offer → Hired / Rejected  
 
-## CORE TEST FLOW
-- Recruiter creates job
-- Candidate applies
-- Recruiter advances stage
-- Step Function executes successfully
-- Email notification sent
-- Candidate sees updated status
+All transitions are enforced using AWS Step Functions to prevent invalid state changes.
 
-## SECURITY VALIDATION
-- Hiring Manager create job → 403 Forbidden
-- Candidate advance stage → 403 Forbidden
-- Recruiter full access → ALLOWED
+---
 
-## AUTHOR
-J DYNS GOWRISH
+## Role-Based Access Control (RBAC)
+
+RBAC enforced at:
+- API Gateway Authorizers  
+- Lambda business logic  
+
+Key Rules:
+- Recruiter: Full access  
+- Candidate: Apply + view own applications  
+- Hiring Manager: Read-only access  
+
+---
+
+## Database Schema (PostgreSQL)
+
+- companies  
+- users  
+- jobs  
+- applications  
+- application_history  
+
+Schema file location:  
+/database/schema.sql  
+
+---
+
+## Folder Structure
+
+/serverless-ats  
+├── ATS-Job-Service/  
+├── ATS-Application-Service/  
+├── ATS-User-Sync/  
+├── ATS-Workflow-Trigger/  
+├── ATS-State-Updater/  
+├── ATS-Email-Worker/  
+├── database/  
+│ └── schema.sql  
+├── ATS_Postman_Collection.json  
+└── README.md  
+
+---
+
+## Setup & Installation (All Steps)
+
+### Prerequisites
+- Node.js v20.x  
+- AWS Account  
+- PostgreSQL Client (DBeaver / psql)  
+- AWS CLI configured  
+
+---
+
+### Database Setup (Amazon RDS)
+
+1. Create PostgreSQL RDS instance  
+2. Allow inbound traffic on port 5432  
+3. Connect using PostgreSQL client  
+4. Run:  
+/database/schema.sql  
+
+---
+
+### Lambda Setup (For Each Microservice)
+
+cd ATS-Job-Service  
+npm install  
+
+- Zip only contents (not parent folder)  
+- Create Lambda (Node.js 20.x)  
+- Upload zip  
+
+---
+
+### Environment Variables (Lambda)
+
+DB_HOST=your-rds-endpoint  
+DB_USER=postgres  
+DB_PASSWORD=your_password  
+DB_NAME=postgres  
+QUEUE_URL=your_sqs_queue_url  
+STATE_MACHINE_ARN=your_step_function_arn  
+SENDER_EMAIL=verified_ses_email  
+
+---
+
+### Step Functions
+
+- Create Standard State Machine  
+- Chain:  
+  - ATS-State-Updater  
+  - ATS-Email-Worker  
+- Grant Lambda invoke permissions  
+- Copy ARN → set in Workflow Trigger Lambda  
+
+---
+
+### API Gateway
+
+- Create REST API  
+- Map routes to Lambdas  
+- Enable CORS on all routes  
+- Deploy to `prod`  
+- Copy Invoke URL  
+
+---
+
+### Amazon Cognito
+
+1. Create User Pool (Email login)  
+2. Create App Client (no client secret)  
+3. Enable USER_PASSWORD_AUTH  
+4. Attach ATS-User-Sync Lambda to Post Confirmation trigger  
+
+---
+
+## How to Test
+
+### Generate JWT Token
+
+aws cognito-idp initiate-auth  
+--auth-flow USER_PASSWORD_AUTH  
+--client-id YOUR_CLIENT_ID  
+--auth-parameters USERNAME=user@example.com,PASSWORD=Example@123  
+
+Copy `IdToken` into Postman Authorization header.
+
+---
+
+### Test Flow
+
+1. Recruiter creates job  
+2. Candidate applies  
+3. Recruiter advances application stage  
+4. Step Function executes successfully  
+5. Email sent via SES  
+6. Candidate views updated status  
+
+---
+
+### Security Tests
+
+- Hiring Manager creates job → 403 Forbidden  
+- Candidate advances stage → 403 Forbidden  
+- Recruiter full access → Allowed  
+
+---
+
+## Author
+
+Built by **J DYNS GOWRISH**
