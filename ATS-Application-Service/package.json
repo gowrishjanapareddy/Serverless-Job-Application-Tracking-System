@@ -7,15 +7,15 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/gowrishjanapareddy/Serverless-Job-Application-Tracking-System.git"
+    "url": "git+https://github.com/Sayyaddsameer/Serverless-Job-Application-Tracking-System.git"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/gowrishjanapareddy/Serverless-Job-Application-Tracking-System/issues"
+    "url": "https://github.com/Sayyaddsameer/Serverless-Job-Application-Tracking-System/issues"
   },
-  "homepage": "https://github.com/gowrishjanapareddy/Serverless-Job-Application-Tracking-System#readme",
+  "homepage": "https://github.com/Sayyaddsameer/Serverless-Job-Application-Tracking-System#readme",
   "description": "",
   "dependencies": {
     "pg": "^8.16.3"
